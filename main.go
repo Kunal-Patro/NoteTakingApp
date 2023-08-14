@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 
+	"github.com/Kunal-Patro/NoteTakingApp/controllers"
 	"github.com/Kunal-Patro/NoteTakingApp/initializers"
 	"github.com/gin-gonic/gin"
 )
@@ -17,11 +18,10 @@ func main() {
 	fmt.Println("Getting Started...")
 
 	router := gin.Default()
-	router.GET("/", func(c *gin.Context) {
-		c.JSON(200, gin.H{
-			"message": "OK",
-		})
-	})
+
+	router.POST("/signup", controllers.SignUp)
+
+	router.POST("/login", controllers.Login)
 
 	router.Run()
 }
