@@ -10,6 +10,7 @@ import (
 func init() {
 	initializers.LoadEnvVariables()
 	initializers.ConnectToDatabase()
+	initializers.MigrateDatabase()
 }
 
 func main() {
