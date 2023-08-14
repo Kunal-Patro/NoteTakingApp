@@ -121,3 +121,10 @@ func Login(c *gin.Context) {
 	c.SetCookie("Authorization", tokenString, 3600*24*30, "", "", false, true)
 	c.JSON(http.StatusOK, gin.H{})
 }
+
+func Validate(c *gin.Context) {
+	user, _ := c.Get("user")
+	c.JSON(http.StatusOK, gin.H{
+		"message": fmt.Sprintf("%v is logged in successfully", user.(models.User).Email),
+	})
+}
