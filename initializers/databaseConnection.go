@@ -1,9 +1,9 @@
 package initializers
 
 import (
-	"log"
 	"os"
 
+	"github.com/Kunal-Patro/NoteTakingApp/internal/logger"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
@@ -16,7 +16,8 @@ func ConnectToDatabase() {
 	DB, err = gorm.Open(postgres.Open(dsn), &gorm.Config{})
 
 	if err != nil {
-		log.Fatal("Error connecting to database: ", err)
+		// log.Fatal("Error connecting to database: ", err)
+		logger.WithService("database-service").WithError(err).Error("Error connecting to database")
 	}
 
 }
