@@ -23,13 +23,6 @@ func CreateNotebook(c *gin.Context) {
 
 	user, _ := c.Get("user")
 
-	// if !ok {
-	// 	c.JSON(http.StatusBadRequest, gin.H{
-	// 		"error": "Failed to fetch user",
-	// 	})
-	// 	return
-	// }
-
 	notebook := models.Notebook{
 		Name: body.Name,
 		User: user.(models.User),
@@ -49,7 +42,7 @@ func CreateNotebook(c *gin.Context) {
 	})
 }
 
-func GetNotebooks(c *gin.Context) {
+func GetAllNotebooks(c *gin.Context) {
 	user, _ := c.Get("user")
 
 	var notebooks []models.Notebook
@@ -72,10 +65,11 @@ func GetNotebooks(c *gin.Context) {
 }
 
 func GetNotebook(c *gin.Context) {
+	user, _ := c.Get("user")
 	notebookID := c.Param("notebook_id")
 
 	var notebook models.Notebook
-	initializers.DB.Find(&notebook, "id = ?", notebookID)
+	initializers.DB.Find(&notebook, "id = ? AND user_id = ?", notebookID, user.(models.User).ID)
 
 	if notebook.ID == uuid.Nil {
 		c.JSON(http.StatusBadRequest, gin.H{
@@ -106,18 +100,11 @@ func UpdateNotebook(c *gin.Context) {
 	notebookID := c.Param("notebook_id")
 
 	var notebook models.Notebook
-	initializers.DB.Find(&notebook, "id = ?", notebookID)
+	initializers.DB.Find(&notebook, "id = ? AND user_id = ?", notebookID, user.(models.User).ID)
 
 	if notebook.ID == uuid.Nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"error": "Cannot find the requested notebook.",
-		})
-		return
-	}
-
-	if notebook.UserID != user.(models.User).ID {
-		c.JSON(http.StatusUnauthorized, gin.H{
-			"error": "Invalid Operation",
 		})
 		return
 	}
@@ -142,18 +129,11 @@ func DeleteNotebook(c *gin.Context) {
 	notebookID := c.Param("notebook_id")
 
 	var notebook models.Notebook
-	initializers.DB.Find(&notebook, "id = ?", notebookID)
+	initializers.DB.Find(&notebook, "id = ? AND user_id = ?", notebookID, user.(models.User).ID)
 
 	if notebook.ID == uuid.Nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"error": "Cannot find the requested notebook.",
-		})
-		return
-	}
-
-	if notebook.UserID != user.(models.User).ID {
-		c.JSON(http.StatusUnauthorized, gin.H{
-			"error": "invalid operation",
 		})
 		return
 	}

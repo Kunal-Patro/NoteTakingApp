@@ -15,5 +15,5 @@ type Note struct {
 	UpdatedAt   time.Time      `json:"-" gorm:"autoUpdateTime"`
 	DeletedAt   gorm.DeletedAt `json:"-" gorm:"index"`
 	NotebookID  uuid.UUID      `json:"notebook_id"`
-	Notebook    Notebook       `gorm:"foreignKey:NotebookID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE"`
+	Notebook    Notebook       `json:"-" gorm:"foreignKey:NotebookID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE"`
 }

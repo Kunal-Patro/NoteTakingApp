@@ -28,13 +28,23 @@ func main() {
 
 	router.POST("/notebook", middleware.ProcessAuth, controllers.CreateNotebook)
 
-	router.GET("/notebook", middleware.ProcessAuth, controllers.GetNotebooks)
+	router.GET("/notebook", middleware.ProcessAuth, controllers.GetAllNotebooks)
 
 	router.GET("/notebook/:notebook_id", middleware.ProcessAuth, controllers.GetNotebook)
 
 	router.PUT("/notebook/:notebook_id", middleware.ProcessAuth, controllers.UpdateNotebook)
 
 	router.DELETE("/notebook/:notebook_id", middleware.ProcessAuth, controllers.DeleteNotebook)
+
+	router.POST("/notebook/:notebook_id/note", middleware.ProcessAuth, controllers.CreateNote)
+
+	router.GET("/notebook/:notebook_id/note", middleware.ProcessAuth, controllers.GetAllNotes)
+
+	router.GET("/notebook/:notebook_id/note/:note_id", middleware.ProcessAuth, controllers.GetNote)
+
+	router.PUT("/notebook/:notebook_id/note/:note_id", middleware.ProcessAuth, controllers.UpdateNote)
+
+	router.DELETE("/notebook/:notebook_id/note/:note_id", middleware.ProcessAuth, controllers.DeleteNote)
 
 	router.Run()
 }
