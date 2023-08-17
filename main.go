@@ -26,5 +26,15 @@ func main() {
 
 	router.GET("/validate", middleware.ProcessAuth, controllers.Validate)
 
+	router.POST("/notebook", middleware.ProcessAuth, controllers.CreateNotebook)
+
+	router.GET("/notebook", middleware.ProcessAuth, controllers.GetNotebooks)
+
+	router.GET("/notebook/:notebook_id", middleware.ProcessAuth, controllers.GetNotebook)
+
+	router.PUT("/notebook/:notebook_id", middleware.ProcessAuth, controllers.UpdateNotebook)
+
+	router.DELETE("/notebook/:notebook_id", middleware.ProcessAuth, controllers.DeleteNotebook)
+
 	router.Run()
 }

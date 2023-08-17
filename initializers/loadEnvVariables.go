@@ -1,14 +1,13 @@
 package initializers
 
 import (
-	"log"
-
+	"github.com/Kunal-Patro/NoteTakingApp/internal/logger"
 	"github.com/joho/godotenv"
 )
 
 func LoadEnvVariables() {
 	err := godotenv.Load()
 	if err != nil {
-		log.Fatal("Error loading .env file: ", err)
+		logger.WithService("environment_loader-service").WithError(err).Error("Cannot load .env file")
 	}
 }
