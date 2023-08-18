@@ -46,5 +46,7 @@ func main() {
 
 	router.DELETE("/notebook/:notebook_id/note/:note_id", middleware.ProcessAuth, controllers.DeleteNote)
 
+	router.POST("/search", middleware.ProcessAuth, controllers.SearchContent)
+
 	router.Run()
 }
