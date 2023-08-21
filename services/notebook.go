@@ -2,7 +2,9 @@ package services
 
 import (
 	"fmt"
+	"math"
 	"net/http"
+	"strconv"
 
 	"github.com/Kunal-Patro/NoteTakingApp/dto"
 	"github.com/Kunal-Patro/NoteTakingApp/initializers"
@@ -29,6 +31,79 @@ func CreateNotebook(body *dto.NotebookDTO, user models.User) types.Response {
 	return types.Response{
 		Code: http.StatusOK,
 		Body: fmt.Sprintf(`Notebook by name "%v" created.`, notebook.Name),
+	}
+}
+
+func FetchAllNotebooks(pageStr string, user models.User) types.Response {
+	const NOTEBOOK_PER_PAGE = 3
+	page, err := strconv.Atoi(pageStr)
+
+	if err != nil {
+		return types.Response{
+			Code: http.StatusBadRequest,
+			Body: "Unable to get page value.",
+		}
+	}
+
+	var notebookCount int64
+	if err := initializers.DB.Table("notebooks").Count(&notebookCount).Error; err != nil {
+		return types.Response{
+			Code: http.StatusInternalServerError,
+			Body: "Failed to cout notebooks.",
+		}
+	}
+
+	pageCount := int(math.Ceil(float64(notebookCount) / float64(NOTEBOOK_PER_PAGE)))
+
+	if pageCount == 0 {
+		pageCount = 1
+	}
+	if page < 1 || page > pageCount {
+		return types.Response{
+			Code: http.StatusBadRequest,
+			Body: "Invalid Page",
+		}
+	}
+
+	offset := (page - 1) * NOTEBOOK_PER_PAGE
+
+	var notebooks []models.Notebook
+	result := initializers.DB.Limit(NOTEBOOK_PER_PAGE).Offset(offset).
+		Find(&notebooks, "user_id = ?", user.ID)
+
+	if result.Error != nil {
+		return types.Response{
+			Code: http.StatusInternalServerError,
+			Body: "Failed to fetch data.",
+		}
+	}
+
+	var prevPage, nextPage string
+
+	if page > 1 {
+		prevPage = fmt.Sprintf("%d", page-1)
+	}
+
+	if page < pageCount {
+		nextPage = fmt.Sprintf("%d", page+1)
+	}
+
+	pages := make([]int, pageCount)
+
+	for i := 0; i < pageCount; i++ {
+		pages[i] = i + 1
+	}
+
+	return types.Response{
+		Code: http.StatusOK,
+		Body: notebooks,
+		Page: types.PaginatedData{
+			PageCount: pageCount,
+			CurrPage:  page,
+			NextPage:  nextPage,
+			PrevPage:  prevPage,
+			Pages:     pages,
+		},
 	}
 }
 
