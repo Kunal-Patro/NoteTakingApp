@@ -6,18 +6,17 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/Kunal-Patro/NoteTakingApp/dto"
 	"github.com/Kunal-Patro/NoteTakingApp/initializers"
 	"github.com/Kunal-Patro/NoteTakingApp/models"
+	"github.com/Kunal-Patro/NoteTakingApp/services"
 	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
 )
 
 const NOTEBOOK_PER_PAGE = 3
 
 func CreateNotebook(c *gin.Context) {
-	var body struct {
-		Name string `json:"name"`
-	}
+	var body dto.NotebookDTO
 
 	if c.Bind(&body) != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
@@ -28,22 +27,14 @@ func CreateNotebook(c *gin.Context) {
 
 	user, _ := c.Get("user")
 
-	notebook := models.Notebook{
-		Name: body.Name,
-		User: user.(models.User),
+	res := services.CreateNotebook(&body, user.(models.User))
+
+	tag := "message"
+	if res.Code != http.StatusOK {
+		tag = "error"
 	}
-
-	result := initializers.DB.Create(&notebook)
-
-	if result.Error != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "Failed to create notebook",
-		})
-		return
-	}
-
-	c.JSON(http.StatusOK, gin.H{
-		"message": notebook,
+	c.JSON(res.Code, gin.H{
+		tag: res.Body,
 	})
 }
 
@@ -123,27 +114,22 @@ func GetNotebook(c *gin.Context) {
 	user, _ := c.Get("user")
 	notebookID := c.Param("notebook_id")
 
-	var notebook models.Notebook
-	initializers.DB.Find(&notebook, "id = ? AND user_id = ?", notebookID, user.(models.User).ID)
+	res := services.FetchNotebook(notebookID, user.(models.User))
 
-	if notebook.ID == uuid.Nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "Cannot find the requested notebook.",
-		})
-		return
+	tag := "notebook"
+	if res.Code != http.StatusOK {
+		tag = "error"
 	}
-
-	c.JSON(http.StatusOK, gin.H{
-		"notebook": notebook,
+	c.JSON(res.Code, gin.H{
+		tag: res.Body,
 	})
 }
 
 func UpdateNotebook(c *gin.Context) {
-	var body struct {
-		Name string `json:"name"`
-	}
+	var body dto.NotebookDTO
 
 	user, _ := c.Get("user")
+	notebookID := c.Param("notebook_id")
 
 	if c.Bind(&body) != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
@@ -152,29 +138,15 @@ func UpdateNotebook(c *gin.Context) {
 		return
 	}
 
-	notebookID := c.Param("notebook_id")
+	res := services.AlterNotebook(&body, notebookID, user.(models.User))
 
-	var notebook models.Notebook
-	initializers.DB.Find(&notebook, "id = ? AND user_id = ?", notebookID, user.(models.User).ID)
-
-	if notebook.ID == uuid.Nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "Cannot find the requested notebook.",
-		})
-		return
+	tag := "message"
+	if res.Code != http.StatusOK {
+		tag = "error"
 	}
 
-	result := initializers.DB.Model(&notebook).Updates(models.Notebook{Name: body.Name})
-
-	if result.Error != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "Failed to update notebook.",
-		})
-		return
-	}
-
-	c.JSON(http.StatusOK, gin.H{
-		"message": "Record Updated",
+	c.JSON(res.Code, gin.H{
+		tag: res.Body,
 	})
 
 }
@@ -183,26 +155,14 @@ func DeleteNotebook(c *gin.Context) {
 	user, _ := c.Get("user")
 	notebookID := c.Param("notebook_id")
 
-	var notebook models.Notebook
-	initializers.DB.Find(&notebook, "id = ? AND user_id = ?", notebookID, user.(models.User).ID)
+	res := services.RemoveNotebook(notebookID, user.(models.User))
 
-	if notebook.ID == uuid.Nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "Cannot find the requested notebook.",
-		})
-		return
+	tag := "message"
+	if res.Code != http.StatusOK {
+		tag = "error"
 	}
 
-	result := initializers.DB.Delete(&notebook)
-
-	if result.Error != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "Failed to delete notebook.",
-		})
-		return
-	}
-
-	c.JSON(http.StatusOK, gin.H{
-		"message": "Notebook deleted.",
+	c.JSON(res.Code, gin.H{
+		tag: res.Body,
 	})
 }
