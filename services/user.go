@@ -120,3 +120,36 @@ func LoginUser(body *dto.LoginUserDTO) (types.Response, string) {
 		Body: "Logged In.",
 	}, tokenString
 }
+
+func LogoutUser(auth models.Auth) types.Response {
+	var authentication models.Auth
+	result := initializers.DB.Find(&authentication, "auth_id = ?", auth.AuthID)
+
+	if authentication.AuthID == uuid.Nil {
+		return types.Response{
+			Code: http.StatusBadRequest,
+			Body: "Cannot find auth entry",
+		}
+	}
+
+	if result.Error != nil {
+		return types.Response{
+			Code: http.StatusInternalServerError,
+			Body: "Failed to fetch auth.",
+		}
+	}
+
+	result = initializers.DB.Delete(&authentication)
+
+	if result.Error != nil {
+		return types.Response{
+			Code: http.StatusInternalServerError,
+			Body: "Failed to delete auth.",
+		}
+	}
+
+	return types.Response{
+		Code: http.StatusOK,
+		Body: "Logged out.",
+	}
+}
