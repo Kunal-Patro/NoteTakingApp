@@ -83,9 +83,12 @@ func LoginUser(body *dto.LoginUserDTO) (types.Response, string) {
 	}
 
 	// Generate jwt token
+	authKey := uuid.New()
+	expiration := time.Now().Add(time.Hour * 24 * 30).Unix()
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"sub": user.ID,                                    // subject
-		"exp": time.Now().Add(time.Hour * 24 * 30).Unix(), // expiration
+		"sub":  user.ID,    // subject
+		"auth": authKey,    //authKey
+		"exp":  expiration, // expiration
 	})
 
 	// Sign and get the complete encoded token as a sring using secret
@@ -95,6 +98,20 @@ func LoginUser(body *dto.LoginUserDTO) (types.Response, string) {
 		return types.Response{
 			Code: http.StatusInternalServerError,
 			Body: "Failed to generate token.",
+		}, ""
+	}
+
+	newAuth := models.Auth{
+		AuthID:          authKey,
+		TokenExpiration: float64(expiration),
+		User:            user,
+	}
+	result = initializers.DB.Create(&newAuth)
+
+	if result.Error != nil {
+		return types.Response{
+			Code: http.StatusInternalServerError,
+			Body: "Failed to create authentication",
 		}, ""
 	}
 

@@ -10,6 +10,7 @@ import (
 	"github.com/Kunal-Patro/NoteTakingApp/models"
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/google/uuid"
 )
 
 func ProcessAuth(c *gin.Context) {
@@ -32,6 +33,17 @@ func ProcessAuth(c *gin.Context) {
 
 	if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
 
+		// Check the blacklist table
+		var auth models.Auth
+		initializers.DB.First(&auth, "auth_id = ?", claims["auth"])
+
+		if auth.AuthID == uuid.Nil {
+			c.JSON(http.StatusUnauthorized, gin.H{
+				"error": "blacklisted",
+			})
+			return
+		}
+
 		// Check the expiration
 		if float64(time.Now().Unix()) > claims["exp"].(float64) {
 			c.AbortWithStatus(http.StatusUnauthorized)
@@ -41,12 +53,13 @@ func ProcessAuth(c *gin.Context) {
 		var user models.User
 		initializers.DB.First(&user, "id = ?", claims["sub"])
 
-		if user.ID.String() == "00000000-0000-0000-0000-000000000000" {
+		if user.ID == uuid.Nil {
 			c.AbortWithStatus(http.StatusUnauthorized)
 		}
 
 		// Attach token to request
 		c.Set("user", user)
+		c.Set("auth", auth)
 
 		// Continue
 		c.Next()

@@ -24,6 +24,8 @@ func main() {
 
 	router.POST("/login", controllers.Login)
 
+	router.POST("/logout", middleware.ProcessAuth, controllers.Logout)
+
 	router.GET("/validate", middleware.ProcessAuth, controllers.Validate)
 
 	router.POST("/notebook", middleware.ProcessAuth, controllers.CreateNotebook)

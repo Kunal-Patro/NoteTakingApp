@@ -5,4 +5,5 @@ var TABLES = []interface{}{
 	&User{},
 	&Note{},
 	&Notebook{},
+	&Auth{},
 }
