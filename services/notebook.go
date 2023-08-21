@@ -108,14 +108,10 @@ func FetchAllNotebooks(pageStr string, user models.User) types.Response {
 }
 
 func FetchNotebook(notebookID string, user models.User) types.Response {
-	var notebook models.Notebook
-	initializers.DB.Find(&notebook, "id = ? AND user_id = ?", notebookID, user.ID)
+	res, notebook := GetNotebookByUser(notebookID, user.ID)
 
-	if notebook.ID == uuid.Nil {
-		return types.Response{
-			Code: http.StatusBadRequest,
-			Body: "Cannot find the requested notebook.",
-		}
+	if res.Code != http.StatusOK {
+		return res
 	}
 
 	return types.Response{
@@ -125,14 +121,10 @@ func FetchNotebook(notebookID string, user models.User) types.Response {
 }
 
 func AlterNotebook(body *dto.NotebookDTO, notebookID string, user models.User) types.Response {
-	var notebook models.Notebook
-	initializers.DB.Find(&notebook, "id = ? AND user_id = ?", notebookID, user.ID)
+	res, notebook := GetNotebookByUser(notebookID, user.ID)
 
-	if notebook.ID == uuid.Nil {
-		return types.Response{
-			Code: http.StatusBadRequest,
-			Body: "Cannot find requested notebook.",
-		}
+	if res.Code != http.StatusOK {
+		return res
 	}
 
 	result := initializers.DB.Model(&notebook).Updates(models.Notebook{Name: body.Name})
@@ -151,14 +143,10 @@ func AlterNotebook(body *dto.NotebookDTO, notebookID string, user models.User) t
 }
 
 func RemoveNotebook(notebookID string, user models.User) types.Response {
-	var notebook models.Notebook
-	initializers.DB.Find(&notebook, "id = ? AND user_id = ?", notebookID, user.ID)
+	res, notebook := GetNotebookByUser(notebookID, user.ID)
 
-	if notebook.ID == uuid.Nil {
-		return types.Response{
-			Code: http.StatusBadRequest,
-			Body: "Cannot find the requested notebook.",
-		}
+	if res.Code != http.StatusOK {
+		return res
 	}
 
 	result := initializers.DB.Delete(&notebook)
@@ -174,4 +162,21 @@ func RemoveNotebook(notebookID string, user models.User) types.Response {
 		Code: http.StatusOK,
 		Body: "Record deleted.",
 	}
+}
+
+func GetNotebookByUser(notebookID string, userID uuid.UUID) (types.Response, models.Notebook) {
+	var notebook models.Notebook
+	initializers.DB.Find(&notebook, "id = ? AND user_id = ?", notebookID, userID)
+
+	if notebook.ID == uuid.Nil {
+		return types.Response{
+			Code: http.StatusBadRequest,
+			Body: "Cannot find the notebook",
+		}, models.Notebook{}
+	}
+
+	return types.Response{
+		Code: http.StatusOK,
+		Body: "",
+	}, notebook
 }

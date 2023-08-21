@@ -14,14 +14,10 @@ import (
 )
 
 func CreateNewNote(body *dto.NoteDTO, notebookID string, user models.User) types.Response {
-	var notebook models.Notebook
-	initializers.DB.Find(&notebook, "id = ? AND user_id = ?", notebookID, user.ID)
+	res, notebook := GetNotebookByUser(notebookID, user.ID)
 
-	if notebook.ID == uuid.Nil {
-		return types.Response{
-			Code: http.StatusBadRequest,
-			Body: "Cannot find the notebook.",
-		}
+	if res.Code != http.StatusOK {
+		return res
 	}
 
 	note := models.Note{
@@ -47,14 +43,10 @@ func CreateNewNote(body *dto.NoteDTO, notebookID string, user models.User) types
 
 func FetchAllNotes(notebookID string, pageStr string, user models.User) types.Response {
 	const NOTES_PER_PAGE = 3
-	var notebook models.Notebook
-	initializers.DB.Find(&notebook, "id = ? AND user_id = ?", notebookID, user.ID)
+	res, _ := GetNotebookByUser(notebookID, user.ID)
 
-	if notebook.ID == uuid.Nil {
-		return types.Response{
-			Code: http.StatusBadRequest,
-			Body: "Cannot find the notebook.",
-		}
+	if res.Code != http.StatusOK {
+		return res
 	}
 
 	page, err := strconv.Atoi(pageStr)
@@ -129,24 +121,16 @@ func FetchAllNotes(notebookID string, pageStr string, user models.User) types.Re
 }
 
 func FetchNote(noteID string, notebookID string, user models.User) types.Response {
-	var notebook models.Notebook
-	initializers.DB.Find(&notebook, "id = ? AND user_id = ?", notebookID, user.ID)
+	res, _ := GetNotebookByUser(notebookID, user.ID)
 
-	if notebook.ID == uuid.Nil {
-		return types.Response{
-			Code: http.StatusBadRequest,
-			Body: "Cannot find the notebook",
-		}
+	if res.Code != http.StatusOK {
+		return res
 	}
 
-	var note models.Note
-	initializers.DB.Find(&note, "id = ? AND notebook_id = ?", noteID, notebookID)
+	res, note := getNoteFromNotebook(noteID, notebookID)
 
-	if note.ID == uuid.Nil {
-		return types.Response{
-			Code: http.StatusBadRequest,
-			Body: "Cannot find requested not in the notebook.",
-		}
+	if res.Code != http.StatusOK {
+		return res
 	}
 
 	return types.Response{
@@ -156,24 +140,16 @@ func FetchNote(noteID string, notebookID string, user models.User) types.Respons
 }
 
 func AlterNote(body *dto.NoteDTO, noteID string, notebookID string, user models.User) types.Response {
-	var notebook models.Notebook
-	initializers.DB.Find(&notebook, "id = ? AND user_id = ?", notebookID, user.ID)
+	res, _ := GetNotebookByUser(notebookID, user.ID)
 
-	if notebook.ID == uuid.Nil {
-		return types.Response{
-			Code: http.StatusBadRequest,
-			Body: "Cannot find the notebook.",
-		}
+	if res.Code != http.StatusOK {
+		return res
 	}
 
-	var note models.Note
-	initializers.DB.Find(&note, "id = ? AND notebook_id = ?", noteID, notebookID)
+	res, note := getNoteFromNotebook(noteID, notebookID)
 
-	if note.ID == uuid.Nil {
-		return types.Response{
-			Code: http.StatusBadRequest,
-			Body: "Cannot find requested note in the notebook",
-		}
+	if res.Code != http.StatusOK {
+		return res
 	}
 
 	result := initializers.DB.Model(&note).Updates(models.Note{
@@ -195,24 +171,16 @@ func AlterNote(body *dto.NoteDTO, noteID string, notebookID string, user models.
 }
 
 func RemoveNote(noteID string, notebookID string, user models.User) types.Response {
-	var notebook models.Notebook
-	initializers.DB.Find(&notebook, "id = ? AND user_id = ?", notebookID, user.ID)
+	res, _ := GetNotebookByUser(notebookID, user.ID)
 
-	if notebook.ID == uuid.Nil {
-		return types.Response{
-			Code: http.StatusBadRequest,
-			Body: "Cannot find the notebook",
-		}
+	if res.Code != http.StatusOK {
+		return res
 	}
 
-	var note models.Note
-	initializers.DB.Find(&note, "id = ? AND notebook_id = ?", noteID, notebookID)
+	res, note := getNoteFromNotebook(noteID, notebookID)
 
-	if note.ID == uuid.Nil {
-		return types.Response{
-			Code: http.StatusBadRequest,
-			Body: "Cannot find the requested note in notebook.",
-		}
+	if res.Code != http.StatusOK {
+		return res
 	}
 
 	result := initializers.DB.Delete(&note)
@@ -228,4 +196,21 @@ func RemoveNote(noteID string, notebookID string, user models.User) types.Respon
 		Code: http.StatusOK,
 		Body: "Note deleted",
 	}
+}
+
+func getNoteFromNotebook(noteID string, notebookID string) (types.Response, models.Note) {
+	var note models.Note
+	initializers.DB.Find(&note, "id = ? AND notebook_id = ?", noteID, notebookID)
+
+	if note.ID == uuid.Nil {
+		return types.Response{
+			Code: http.StatusBadRequest,
+			Body: "Cannot find the requested note in notebook.",
+		}, models.Note{}
+	}
+
+	return types.Response{
+		Code: http.StatusOK,
+		Body: "",
+	}, note
 }
