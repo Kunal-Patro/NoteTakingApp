@@ -1,0 +1,30 @@
+version: "3.7"
+
+services:
+  backend:
+    container_name: go-server
+    build:
+      context: .
+      dockerfile: Dockerfile
+    env_file: .env
+    depends_on:
+      - database
+    networks:
+      - default
+    ports:
+      - "8085:8085" 
+  database:
+    container_name: go-db
+    image: postgres:14
+    environment:
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: postgres
+      POSTGRES_USER: postgres
+    ports:
+      - "5433:5432"
+    volumes:
+      - type: volume
+        source: pgdata
+        target: /var/lib/postgresql/data
+volumes: 
+  pgdata:
